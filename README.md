@@ -6,7 +6,7 @@
 
 View or diff against previous versions of the current file.
 
-There are at least a couple of other extensions that provide this functionalities, but they are so bloated with features I don't need that I couldn't even make them work.
+There are at least a couple of other extensions that provide these functionalities, but they are so bloated with features I don't need that I couldn't even make them work.
 
 ## Install
 
