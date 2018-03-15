@@ -3,6 +3,7 @@
 
 import * as fs from 'fs';
 import * as moment from 'moment';
+import * as path from 'path';
 import * as temp from 'temp';
 import * as vscode from 'vscode';
 import Utils from './utils';
@@ -77,7 +78,7 @@ async function fileDiff () {
 
   const tempOptions = {
     prefix: 'vscode-git-history',
-    suffix: '.js'
+    suffix: path.extname ( data.filepath )
   };
 
   temp.open ( tempOptions, ( err, info ) => {
