@@ -1,4 +1,4 @@
-# VSC Git File History
+# Git File History
 
 <p align="center">
 	<img src="https://raw.githubusercontent.com/fabiospampinato/vscode-git-history/master/resources/logo-128x128.png" alt="Logo">
@@ -10,10 +10,10 @@ There are at least a couple of other extensions that provide these functionaliti
 
 ## Install
 
-Run the following in the command palette:
+Follow the instructions in the [Marketplace](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-git-history), or run the following in the command palette:
 
 ```shell
-ext install vscode-git-history
+ext install fabiospampinato.vscode-git-history
 ```
 
 ## Usage
