@@ -3,7 +3,7 @@
   "displayName": "Git File History",
   "description": "View or diff against previous versions of the current file.",
   "icon": "resources/logo-128x128.png",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "main": "out/src/extension.js",
   "publisher": "fabiospampinato",

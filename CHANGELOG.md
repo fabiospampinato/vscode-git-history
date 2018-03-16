@@ -1,3 +1,6 @@
+### Version 1.0.3
+- Updated readme
+
 ### Version 1.0.2
 - Fixed a typo
 
