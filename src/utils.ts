@@ -4,10 +4,12 @@
 import * as _ from 'lodash';
 import * as absolute from 'absolute';
 import * as findUp from 'find-up';
+import * as fs from 'fs';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as pify from 'pify';
 import * as simpleGit from 'simple-git';
+import * as temp from 'temp';
 import * as vscode from 'vscode';
 import * as Commands from './commands';
 import Config from './config';
@@ -123,6 +125,12 @@ const Utils = {
 
         return commit.hash.slice ( 0, config.details.hash.length );
 
+      },
+
+      message ( commit ) {
+
+        return commit.message;
+
       }
 
     }
@@ -181,6 +189,31 @@ const Utils = {
 
   },
 
+  temp: {
+
+    getOptions ( filepath ) {
+
+      return {
+        prefix: 'vscode-git-history',
+        suffix: path.extname ( filepath )
+      };
+
+    },
+
+    async makeFile ( options, content? ) {
+
+      const info = await pify ( temp.open )( options );
+
+      if ( content ) await pify ( fs.write )( info.fd, content );
+
+      await pify ( fs.close )( info.fd );
+
+      return info.path;
+
+    }
+
+  },
+
   ui: {
 
     makeItems ( commits ) {
@@ -189,7 +222,7 @@ const Utils = {
 
       return commits.map ( commit => {
 
-        const label = commit.message,
+        const label = Utils.commit.parse.message ( commit ),
               author = config.details.author.enabled && Utils.commit.parse.author ( commit ),
               date = config.details.date.enabled && Utils.commit.parse.date ( commit ),
               hash = config.details.hash.enabled && Utils.commit.parse.hash ( commit ),

@@ -1,10 +1,7 @@
 
 /* IMPORT */
 
-import * as fs from 'fs';
 import * as moment from 'moment';
-import * as path from 'path';
-import * as temp from 'temp';
 import * as vscode from 'vscode';
 import Utils from './utils';
 
@@ -16,7 +13,8 @@ function diff ( leftPath, rightPath, commit? ) {
         rightUri = vscode.Uri.file ( rightPath ),
         date = commit && Utils.commit.parse.date ( commit ),
         hash = commit && Utils.commit.parse.hash ( commit ),
-        title = commit ? [date, hash].join ( ' - ' ) : 'Diff History';
+        message = commit && Utils.commit.parse.message ( commit ),
+        title = commit ? [message, date, hash].join ( ' - ' ) : 'File Diff';
 
   return vscode.commands.executeCommand ( 'vscode.diff', leftUri, rightUri, title );
 
@@ -44,15 +42,19 @@ async function _getFileData () {
 
   if ( !item ) return;
 
+  const commitIndex = commits.indexOf ( item.commit ),
+        prevCommit = ( commitIndex >= ( commits.length - 1 ) ) ? undefined : commits[commitIndex + 1],
+        nextCommit = ( commitIndex <= 0 ) ? undefined : commits[commitIndex - 1];
+
   const content = await Utils.repo.getContentByCommit ( git, item.commit, relfilepath );
 
   if ( content === false ) return vscode.window.showErrorMessage ( 'Couldn\'t get this commit\'s content, please report the error' );
 
-  return { editor: activeTextEditor, repopath, filepath, relfilepath, git, commits, commit: item.commit, content };
+  return { editor: activeTextEditor, repopath, filepath, relfilepath, git, commits, prevCommit, commit: item.commit, nextCommit, content };
 
 }
 
-async function fileHistory ( side? ) {
+async function openFileAtCommit ( side? ) {
 
   const data = await _getFileData () as any;
 
@@ -64,34 +66,40 @@ async function fileHistory ( side? ) {
 
 }
 
-function fileHistoryToSide () {
+function openFileAtCommitToSide () {
 
-  return fileHistory ( true );
+  return openFileAtCommit ( true );
 
 }
 
-async function fileDiff () {
+async function diffFileAtCommit () {
 
   const data = await _getFileData () as any;
 
   if ( !data ) return;
 
-  const tempOptions = {
-    prefix: 'vscode-git-history',
-    suffix: path.extname ( data.filepath )
-  };
+  const tempOptions = Utils.temp.getOptions ( data.filepath ),
+        prevContent = data.prevCommit ? await Utils.repo.getContentByCommit ( data.git, data.prevCommit, data.relfilepath ) : '',
+        prevPath = await Utils.temp.makeFile ( tempOptions, prevContent ),
+        targetPath = await Utils.temp.makeFile ( tempOptions, data.content );
 
-  temp.open ( tempOptions, ( err, info ) => {
-    if ( err ) return vscode.window.showErrorMessage ( err.message );
-    fs.write ( info.fd, data.content );
-    fs.close ( info.fd, err => {
-      if ( err ) return vscode.window.showErrorMessage ( err.message );
-      diff ( data.filepath, info.path, data.commit );
-    })
-  });
+  diff ( prevPath, targetPath, data.commit );
+
+}
+
+async function diffFileAtCommitAgainstCurrent () {
+
+  const data = await _getFileData () as any;
+
+  if ( !data ) return;
+
+  const tempOptions = Utils.temp.getOptions ( data.filepath ),
+        tempPath = await Utils.temp.makeFile ( tempOptions, data.content );
+
+  diff ( data.filepath, tempPath, data.commit );
 
 }
 
 /* EXPORT */
 
-export {diff, fileHistory, fileHistoryToSide, fileDiff};
+export {diff, openFileAtCommit, openFileAtCommitToSide, diffFileAtCommit, diffFileAtCommitAgainstCurrent};

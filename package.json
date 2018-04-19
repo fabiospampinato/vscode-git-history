@@ -8,9 +8,10 @@
   "main": "out/src/extension.js",
   "publisher": "fabiospampinato",
   "activationEvents": [
-    "onCommand:gitHistory.fileHistory",
-    "onCommand:gitHistory.fileHistoryToSide",
-    "onCommand:gitHistory.fileDiff"
+    "onCommand:gitHistory.openFileAtCommit",
+    "onCommand:gitHistory.openFileAtCommitToSide",
+    "onCommand:gitHistory.diffFileAtCommit",
+    "onCommand:gitHistory.diffFileAtCommitAgainstCurrent"
   ],
   "contributes": {
     "configuration": {
@@ -46,16 +47,20 @@
     },
     "commands": [
       {
-        "command": "gitHistory.fileHistory",
-        "title": "Git: File History"
+        "command": "gitHistory.openFileAtCommit",
+        "title": "Git: Open File at Commit"
       },
       {
-        "command": "gitHistory.fileHistoryToSide",
-        "title": "Git: File History to the Side"
+        "command": "gitHistory.openFileAtCommitToSide",
+        "title": "Git: Open File at Commit to the Side"
       },
       {
-        "command": "gitHistory.fileDiff",
-        "title": "Git: File Diff"
+        "command": "gitHistory.diffFileAtCommit",
+        "title": "Git: Diff File at Commit"
+      },
+      {
+        "command": "gitHistory.diffFileAtCommitAgainstCurrent",
+        "title": "Git: Diff File at Commit against Current"
       }
     ]
   },
