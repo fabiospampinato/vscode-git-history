@@ -38,11 +38,11 @@ const Utils = {
 
   editor: {
 
-    open ( content, language, column? ) { //TODO: Set a custom title
+    open ( content, language, viewColumn? ) { //TODO: Set a custom title
 
       vscode.workspace.openTextDocument ({ language }).then ( ( textDocument: vscode.TextDocument ) => {
 
-        vscode.window.showTextDocument ( textDocument, column ).then ( ( textEditor: vscode.TextEditor ) => {
+        vscode.window.showTextDocument ( textDocument, { viewColumn, preview: false } ).then ( ( textEditor: vscode.TextEditor ) => {
 
           textEditor.edit ( edit => {
 
