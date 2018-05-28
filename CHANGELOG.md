@@ -1,3 +1,6 @@
+### Version 2.0.1
+- Always opening document as non-previews
+
 ### Version 2.0.0
 - Added a command for showing only the diff of a particular commit
 
