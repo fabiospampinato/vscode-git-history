@@ -1,3 +1,6 @@
+### Version 2.0.2
+- Fixed a bug under Windows
+
 ### Version 2.0.1
 - Always opening document as non-previews
 
