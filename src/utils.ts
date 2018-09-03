@@ -177,7 +177,7 @@ const Utils = {
 
       try {
 
-        return await git.show ( `${commit.hash}:${filepath}` );
+        return await git.show ( `${commit.hash}:${filepath.replace( /\\/g, '/' )}` );
 
       } catch ( e ) {
 
