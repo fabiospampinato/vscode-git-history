@@ -51,7 +51,7 @@ Dates are formatted using [moment](https://momentjs.com/docs/#/displaying/format
 
 ![History](resources/demo/diff.gif)
 
-## Hints:
+## Hints
 
 - **Diff against opened files**: sometimes diffing against a previous version of a file is not enough, try [Diff](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-diff) for diffing against any arbitrary open file you have.
 
