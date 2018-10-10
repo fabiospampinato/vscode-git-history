@@ -1,3 +1,6 @@
+### Version 2.0.3
+- Bundling with webpack
+
 ### Version 2.0.2
 - Fixed a bug under Windows
 
