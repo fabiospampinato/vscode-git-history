@@ -55,6 +55,12 @@ Dates are formatted using [moment](https://momentjs.com/docs/#/displaying/format
 
 - **Diff against opened files**: sometimes diffing against a previous version of a file is not enough, try [Diff](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-diff) for diffing against any arbitrary open file you have.
 
+## Contributing
+
+If you found a problem, or have a feature request, please open an [issue](https://github.com/fabiospampinato/vscode-git-history/issues) about it.
+
+If you want to make a pull request you can debug the extension using [Debug Launcher](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-debug-launcher).
+
 ## License
 
 MIT © Fabio Spampinato
