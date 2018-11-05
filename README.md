@@ -1,7 +1,7 @@
 # Git File History
 
 <p align="center">
-	<img src="https://raw.githubusercontent.com/fabiospampinato/vscode-git-history/master/resources/logo-128x128.png" alt="Logo">
+	<img src="https://raw.githubusercontent.com/fabiospampinato/vscode-git-history/master/resources/logo.png" width="128" alt="Logo">
 </p>
 
 View or diff against previous versions of the current file.
