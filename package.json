@@ -50,6 +50,10 @@
       {
         "command": "gitHistory.diffFileAtCommitAgainstCurrent",
         "title": "Git: Diff File at Commit against Current"
+      },
+      {
+        "command": "gitHistory.restoreFileAtCommit",
+        "title": "Git: Restore File at Commit"
       }
     ]
   },

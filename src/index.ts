@@ -14,6 +14,7 @@ const activate = (): void => {
   vscode.commands.registerCommand ( 'gitHistory.openFileAtCommitToSide', Commands.openFileAtCommitToSide );
   vscode.commands.registerCommand ( 'gitHistory.diffFileAtCommit', Commands.diffFileAtCommit );
   vscode.commands.registerCommand ( 'gitHistory.diffFileAtCommitAgainstCurrent', Commands.diffFileAtCommitAgainstCurrent );
+  vscode.commands.registerCommand ( 'gitHistory.restoreFileAtCommit', Commands.restoreFileAtCommit );
 
 };
 

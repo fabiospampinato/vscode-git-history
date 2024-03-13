@@ -18,13 +18,14 @@ ext install fabiospampinato.vscode-git-history
 
 ## Usage
 
-It adds 4 commands to the command palette:
+It adds 5 commands to the command palette:
 
 ```js
 'Git: Open File at Commit' // Open the current file at particular commit in time
 'Git: Open File at Commit to the Side' // Open the current file, to the side, at particular commit in time
 'Git: Diff File at Commit' // View the changes made to the current file in a particular commit in time
 'Git: Diff File at Commit against Current' // View the changes made to the current file between now and a particular commit in time
+'Git: Restore File at Commit' // Restore the content of the current file at particular commit in time
 ```
 
 ## Settings

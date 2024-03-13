@@ -2,6 +2,7 @@
 /* IMPORT */
 
 import {Buffer} from 'node:buffer';
+import fs from 'node:fs';
 import path from 'node:path';
 import vscode from 'vscode';
 import {alert, openInDiffEditor, openInEditor} from 'vscode-extras';
@@ -68,6 +69,16 @@ const diffFileAtCommitAgainstCurrent = async (): Promise<void> => {
 
 };
 
+const restoreFileAtCommit = async (): Promise<void> => {
+
+  const data = await getFileData ();
+
+  if ( !data ) return;
+
+  await fs.promises.writeFile ( data.filePath, data.content );
+
+};
+
 /* EXPORT */
 
-export {openFileAtCommit, openFileAtCommitToSide, diffFileAtCommit, diffFileAtCommitAgainstCurrent};
+export {openFileAtCommit, openFileAtCommitToSide, diffFileAtCommit, diffFileAtCommitAgainstCurrent, restoreFileAtCommit};
