@@ -5,7 +5,7 @@
   "repository": "github:fabiospampinato/vscode-git-history",
   "description": "View or diff against previous versions of the current file.",
   "icon": "resources/logo-128x128.png",
-  "version": "2.0.5",
+  "version": "3.0.0",
   "main": "dist/index.js",
   "contributes": {
     "configuration": {
