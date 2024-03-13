@@ -1,3 +1,6 @@
+### Version 3.1.0
+- New command: "Git: Restore File at Commit"
+
 ### Version 3.0.0
 - Rewitten: more modern code, no third-party dependencies, 99% smaller bundle
 - Deleted setting: "gitHistory.details.date.format", for simplicity
