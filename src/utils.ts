@@ -1,238 +1,135 @@
 
 /* IMPORT */
 
-import * as _ from 'lodash';
-import * as absolute from 'absolute';
-import * as findUp from 'find-up';
-import * as fs from 'fs';
-import * as moment from 'moment';
-import * as path from 'path';
-import * as pify from 'pify';
-import * as simpleGit from 'simple-git';
-import * as temp from 'temp';
-import * as vscode from 'vscode';
-import * as Commands from './commands';
-import Config from './config';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import vscode from 'vscode';
+import {alert, getActiveBinaryFilePath, getActiveTextualFilePath, getConfig, getGitRootPath, prompt} from 'vscode-extras';
+import zeptoid from 'zeptoid';
+import Git from './git';
+import type {Commit, FileData, Options} from './types';
 
-/* UTILS */
+/* MAIN */
 
-const Utils = {
+const formatDate = ( date: Date ): string => {
 
-  initCommands ( context: vscode.ExtensionContext ) {
+  const year = date.getFullYear ();
+  const month = `${date.getMonth () + 1}`.padStart ( 2, '0' );
+  const day = `${date.getDate ()}`.padStart ( 2, '0' );
+  const hours = `${date.getHours ()}`.padStart ( 2, '0' );
+  const minutes = `${date.getMinutes ()}`.padStart ( 2, '0' );
 
-    const {commands} = vscode.extensions.getExtension ( 'fabiospampinato.vscode-git-history' ).packageJSON.contributes;
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 
-    commands.forEach ( ({ command, title }) => {
+};
 
-      const commandName = _.last ( command.split ( '.' ) ) as string,
-            handler = Commands[commandName],
-            disposable = vscode.commands.registerCommand ( command, () => handler () );
+const getFileData = async (): Promise<FileData | undefined> => {
 
-      context.subscriptions.push ( disposable );
+  const binaryFilePath = getActiveBinaryFilePath ();
+  const textualFilePath = getActiveTextualFilePath ();
+  const filePath = textualFilePath || binaryFilePath;
+  const isBinary = !textualFilePath && !!binaryFilePath;
+  const isTextual = !isBinary;
+  const language = isTextual ? vscode.window.activeTextEditor?.document.languageId : undefined;
 
-    });
+  if ( !filePath ) return alert.error ( 'You have to open a file first' );
 
-    return Commands;
+  const gitPath = getGitRootPath ();
 
-  },
+  if ( !gitPath ) return alert.error ( 'This file does not belong to a git repository' );
 
-  editor: {
+  const commits = await Git.getCommits ( gitPath, filePath );
 
-    open ( content, language, viewColumn? ) { //TODO: Set a custom title
+  if ( !commits.length ) return alert.error ( 'No commits involving this file found' );
 
-      vscode.workspace.openTextDocument ({ language }).then ( ( textDocument: vscode.TextDocument ) => {
+  const items = getFileItems ( commits );
+  const item = await prompt.select ( 'Select a commit...', items );
 
-        vscode.window.showTextDocument ( textDocument, { viewColumn, preview: false } ).then ( ( textEditor: vscode.TextEditor ) => {
+  if ( !item ) return;
 
-          textEditor.edit ( edit => {
+  const commitIndex = commits.indexOf ( item.commit );
+  const prevCommit = commits[commitIndex + 1];
+  const nextCommit = commits[commitIndex - 1];
+  const content = await Git.getContentAtCommit ( gitPath, filePath, item.commit.hash );
 
-            const pos = new vscode.Position ( 0, 0 );
+  if ( !content ) return alert.error ( 'Could not get this commit\'s content, please report the error' );
 
-            edit.insert ( pos, content );
+  return { filePath, gitPath, isBinary, isTextual, language, commits, prevCommit, commit: item.commit, nextCommit, content };
 
-            textEditor.document.save ();
+};
 
-          });
+const getFileItems = ( commits: Commit[] ): { commit: Commit, label: string, detail: string }[] => {
 
-        });
+  const options = getOptions ();
 
-      });
+  return commits.map ( commit => {
 
-    }
+    const label = commit.message;
+    const author = options.details.author.enabled && commit.author_name;
+    const date = options.details.date.enabled && formatDate ( new Date ( commit.date ) );
+    const hash = options.details.hash.enabled && commit.hash.slice ( 0, options.details.hash.length );
+    const detail = [author, date, hash].filter ( isString ).join ( ' - ' );
 
-  },
+    return { commit, label, detail };
 
-  folder: {
+  });
 
-    getRootPath ( basePath? ) {
+};
 
-      const {workspaceFolders} = vscode.workspace;
+const getFileTemp = async ( filePath: string, fileContent: Buffer, commit?: Commit ): Promise<string> => {
 
-      if ( !workspaceFolders ) return;
+  const {name, ext} = path.parse ( filePath );
+  const tempFileName = `${name}@${commit?.hash.slice ( 0, 7 ) || 'null'}${ext}`;
+  const tempFolderPath = path.join ( os.tmpdir (), zeptoid () );
+  const tempFilePath = path.join ( tempFolderPath, tempFileName );
 
-      const firstRootPath = workspaceFolders[0].uri.fsPath;
+  await fs.promises.mkdir ( tempFolderPath, { recursive: true } );
+  await fs.promises.writeFile ( tempFilePath, fileContent );
 
-      if ( !basePath || !absolute ( basePath ) ) return firstRootPath;
+  return tempFilePath;
 
-      const rootPaths = workspaceFolders.map ( folder => folder.uri.fsPath ),
-            sortedRootPaths = _.sortBy ( rootPaths, [path => path.length] ).reverse (); // In order to get the closest root
+};
 
-      return sortedRootPaths.find ( rootPath => basePath.startsWith ( rootPath ) );
+const getOptions = (): Options => {
 
-    },
+  const config = getConfig ( 'gitHistory' );
+  const authorEnabled = isBoolean ( config?.details?.author?.enabled ) ? config.details.author.enabled : true;
+  const dateEnabled = isBoolean ( config?.details?.date?.enabled ) ? config.details.date.enabled : true;
+  const hashEnabled = isBoolean ( config?.details?.hash?.enabled ) ? config.details.hash.enabled : false;
+  const hashLength = isNumber ( config?.details?.hash?.length ) ? config.details.hash.length : 7;
 
-    async getWrapperPathOf ( rootPath, cwdPath, findPath ) {
+  return { details: { author: { enabled: authorEnabled }, date: { enabled: dateEnabled }, hash: { enabled: hashEnabled, length: hashLength } } };
 
-      const foundPath = await findUp ( findPath, { cwd: cwdPath } );
+};
 
-      if ( foundPath ) {
+const isBoolean = ( value: unknown ): value is boolean => {
 
-        const wrapperPath = path.dirname ( foundPath );
+  return typeof value === 'boolean';
 
-        if ( wrapperPath.startsWith ( rootPath ) ) {
+};
 
-          return wrapperPath;
+const isNumber = ( value: unknown ): value is number => {
 
-        }
+  return typeof value === 'number';
 
-      }
+};
 
-    }
+const isString = ( value: unknown ): value is string => {
 
-  },
+  return typeof value === 'string';
 
-  commit: {
+};
 
-    parse: {
+const truncate = ( str: string, length: number ): string => {
 
-      author ( commit ) {
+  if ( str.length <= length ) {
 
-        return commit.author_name;
+    return str;
 
-      },
+  } else {
 
-      date ( commit ) {
-
-        const config = Config.get ();
-
-        return moment ( new Date ( commit.date ) ).format ( config.details.date.format );
-
-      },
-
-      hash ( commit ) {
-
-        const config = Config.get ();
-
-        return commit.hash.slice ( 0, config.details.hash.length );
-
-      },
-
-      message ( commit ) {
-
-        return commit.message;
-
-      }
-
-    }
-
-  },
-
-  repo: {
-
-    getGit ( repopath ) {
-
-      return pify ( _.bindAll ( simpleGit ( repopath ), ['log', 'show'] ) );
-
-    },
-
-    async getPath () {
-
-      const {activeTextEditor} = vscode.window,
-            editorPath = activeTextEditor && activeTextEditor.document.uri.fsPath,
-            rootPath = Utils.folder.getRootPath ( editorPath );
-
-      if ( !rootPath ) return false;
-
-      return await Utils.folder.getWrapperPathOf ( rootPath, editorPath || rootPath, '.git' );
-
-    },
-
-    async getCommits ( git, filepath? ) {
-
-      try {
-
-        const log = await git.log ({ file: filepath });
-
-        return log.all;
-
-      } catch ( e ) {
-
-        return [];
-
-      }
-
-    },
-
-    async getContentByCommit ( git, commit, filepath ) {
-
-      try {
-
-        return await git.show ( `${commit.hash}:${filepath.replace( /\\/g, '/' )}` );
-
-      } catch ( e ) {
-
-        return false;
-
-      }
-
-    }
-
-  },
-
-  temp: {
-
-    getOptions ( filepath ) {
-
-      return {
-        prefix: 'vscode-git-history',
-        suffix: path.extname ( filepath )
-      };
-
-    },
-
-    async makeFile ( options, content? ) {
-
-      const info = await pify ( temp.open )( options );
-
-      if ( content ) await pify ( fs.write )( info.fd, content );
-
-      await pify ( fs.close )( info.fd );
-
-      return info.path;
-
-    }
-
-  },
-
-  ui: {
-
-    makeItems ( commits ) {
-
-      const config = Config.get ();
-
-      return commits.map ( commit => {
-
-        const label = Utils.commit.parse.message ( commit ),
-              author = config.details.author.enabled && Utils.commit.parse.author ( commit ),
-              date = config.details.date.enabled && Utils.commit.parse.date ( commit ),
-              hash = config.details.hash.enabled && Utils.commit.parse.hash ( commit ),
-              detail = _.compact ([ author, date, hash ]).join ( ' - ' );
-
-        return { commit, label, detail };
-
-      });
-
-    }
+    return `${str.slice ( 0, length - 1 )}…`;
 
   }
 
@@ -240,4 +137,4 @@ const Utils = {
 
 /* EXPORT */
 
-export default Utils;
+export {formatDate, getFileData, getFileItems, getFileTemp, getOptions, isBoolean, isNumber, isString, truncate};

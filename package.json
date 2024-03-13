@@ -1,18 +1,12 @@
 {
   "name": "vscode-git-history",
   "displayName": "Git File History",
+  "publisher": "fabiospampinato",
+  "repository": "github:fabiospampinato/vscode-git-history",
   "description": "View or diff against previous versions of the current file.",
   "icon": "resources/logo-128x128.png",
   "version": "2.0.5",
-  "license": "MIT",
-  "main": "out/extension.js",
-  "publisher": "fabiospampinato",
-  "activationEvents": [
-    "onCommand:gitHistory.openFileAtCommit",
-    "onCommand:gitHistory.openFileAtCommitToSide",
-    "onCommand:gitHistory.diffFileAtCommit",
-    "onCommand:gitHistory.diffFileAtCommitAgainstCurrent"
-  ],
+  "main": "dist/index.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -27,11 +21,6 @@
           "type": "boolean",
           "description": "Show the date of the commit",
           "default": true
-        },
-        "gitHistory.details.date.format": {
-          "type": "string",
-          "description": "Format used for displaying the date",
-          "default": "YYYY-MM-DD HH:mm"
         },
         "gitHistory.details.hash.enabled": {
           "type": "boolean",
@@ -65,53 +54,42 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "rm -rf out && webpack --mode production",
-    "publish": "vsce publish && npm publish",
-    "compile": "webpack --mode development",
-    "compile:watch": "webpack --mode development --watch",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "node ./node_modules/vscode/bin/test"
+    "bundle:dev": "tsex bundle --external vscode --format cjs --platform node --no-declare",
+    "bundle:prod": "tsex bundle --external vscode --format cjs --platform node --minify",
+    "clean": "tsex clean",
+    "compile": "tsex compile",
+    "debug": "code --extensionDevelopmentPath $PWD --inspect-extensions 9222",
+    "package": "vsce package",
+    "prepublishOnly": "scex -bs clean bundle:prod",
+    "vscode:prepublish": "scex -bs clean bundle:prod",
+    "dev": "scex -bs bundle:dev debug",
+    "prod": "scex -bs bundle:prod debug"
   },
-  "bugs": {
-    "url": "https://github.com/fabiospampinato/vscode-git-history/issues"
-  },
-  "author": {
-    "name": "Fabio Spampinato",
-    "email": "spampinabio@gmail.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/fabiospampinato/vscode-git-history.git"
-  },
-  "engines": {
-    "vscode": "^1.15.0"
-  },
-  "keywords": [
-    "vscode",
-    "git",
-    "file",
-    "history",
-    "diff",
-    "extension"
-  ],
   "categories": [
     "Other"
   ],
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "keywords": [
+    "vscode",
+    "vsc",
+    "extension",
+    "git",
+    "file",
+    "history",
+    "diff"
+  ],
   "dependencies": {
-    "@types/node": "^10.12.8",
-    "absolute": "0.0.1",
-    "find-up": "^2.1.0",
-    "lodash": "^4.17.4",
-    "moment": "^2.21.0",
-    "pify": "^3.0.0",
-    "simple-git": "^1.92.0",
-    "temp": "^0.8.3"
+    "vscode-extras": "^1.6.2",
+    "zeptoid": "^1.0.1"
   },
   "devDependencies": {
-    "ts-loader": "^5.2.1",
-    "typescript": "~2.4.1",
-    "vscode": "^1.1.4",
-    "webpack": "^4.20.2",
-    "webpack-cli": "^3.1.2"
+    "@types/node": "^18.19.23",
+    "@types/vscode": "^1.87.0",
+    "esbuild": "0.20.1",
+    "scex": "^1.1.0",
+    "tsex": "^3.2.0",
+    "typescript": "^5.4.2"
   }
 }

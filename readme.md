@@ -33,33 +33,14 @@ It adds 4 commands to the command palette:
 {
   "gitHistory.details.author.enabled": true, // Show the name of the commit's author
   "gitHistory.details.date.enabled": true, // Show the date of the commit
-  "gitHistory.details.date.format": "YYYY-MM-DD HH:mm", // Format used for displaying the date
   "gitHistory.details.hash.enabled": false, // Show the hash of the commit
   "gitHistory.details.hash.length": 7 // Show only this number of characters from the end of the hash
 }
 ```
 
-Dates are formatted using [moment](https://momentjs.com/docs/#/displaying/format/).
-
-## Demo
-
-### Open a previous version to the side
-
-![History](resources/demo/history.gif)
-
-### Diff against a previous version
-
-![History](resources/demo/diff.gif)
-
 ## Hints
 
-- **Diff against opened files**: sometimes diffing against a previous version of a file is not enough, try [Diff](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-diff) for diffing against any arbitrary open file you have.
-
-## Contributing
-
-If you found a problem, or have a feature request, please open an [issue](https://github.com/fabiospampinato/vscode-git-history/issues) about it.
-
-If you want to make a pull request you can debug the extension using [Debug Launcher](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-debug-launcher).
+- **Diff against opened files**: sometimes diffing against a previous version of a file is not what you want, try [Diff](https://marketplace.visualstudio.com/items?itemName=fabiospampinato.vscode-diff) for diffing against any arbitrary open file you have.
 
 ## License
 

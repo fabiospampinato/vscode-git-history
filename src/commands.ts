@@ -1,105 +1,73 @@
 
 /* IMPORT */
 
-import * as moment from 'moment';
-import * as vscode from 'vscode';
-import Utils from './utils';
+import {Buffer} from 'node:buffer';
+import path from 'node:path';
+import vscode from 'vscode';
+import {alert, openInDiffEditor, openInEditor} from 'vscode-extras';
+import Git from './git';
+import {getFileData, getFileTemp, truncate} from './utils';
 
-/* COMMANDS */
+/* MAIN */
 
-function diff ( leftPath, rightPath, commit? ) {
+const openFileAtCommit = async (): Promise<void> => {
 
-  const leftUri = vscode.Uri.file ( leftPath ),
-        rightUri = vscode.Uri.file ( rightPath ),
-        date = commit && Utils.commit.parse.date ( commit ),
-        hash = commit && Utils.commit.parse.hash ( commit ),
-        message = commit && Utils.commit.parse.message ( commit ),
-        title = commit ? [message, date, hash].join ( ' - ' ) : 'File Diff';
-
-  return vscode.commands.executeCommand ( 'vscode.diff', leftUri, rightUri, title );
-
-}
-
-async function _getFileData () {
-
-  const {activeTextEditor} = vscode.window;
-
-  if ( !activeTextEditor ) return vscode.window.showErrorMessage ( 'You have to open a file first' );
-
-  const filepath = activeTextEditor.document.uri.fsPath,
-        repopath = await Utils.repo.getPath ();
-
-  if ( !repopath ) return vscode.window.showErrorMessage ( 'This file doesn\'t belong to a git repository' );
-
-  const relfilepath = filepath.substring ( repopath.length + 1 ),
-        git = Utils.repo.getGit ( repopath ),
-        commits = await Utils.repo.getCommits ( git, filepath );
-
-  if ( !commits.length ) return vscode.window.showErrorMessage ( 'No commits involving this file found' );
-
-  const items = Utils.ui.makeItems ( commits ),
-        item = await vscode.window.showQuickPick ( items, { placeHolder: 'Select a commit...' } ) as any;
-
-  if ( !item ) return;
-
-  const commitIndex = commits.indexOf ( item.commit ),
-        prevCommit = ( commitIndex >= ( commits.length - 1 ) ) ? undefined : commits[commitIndex + 1],
-        nextCommit = ( commitIndex <= 0 ) ? undefined : commits[commitIndex - 1];
-
-  const content = await Utils.repo.getContentByCommit ( git, item.commit, relfilepath );
-
-  if ( content === false ) return vscode.window.showErrorMessage ( 'Couldn\'t get this commit\'s content, please report the error' );
-
-  return { editor: activeTextEditor, repopath, filepath, relfilepath, git, commits, prevCommit, commit: item.commit, nextCommit, content };
-
-}
-
-async function openFileAtCommit ( side? ) {
-
-  const data = await _getFileData () as any;
+  const data = await getFileData ();
 
   if ( !data ) return;
 
-  const column = side ? vscode.ViewColumn.Three : undefined;
+  const filePath = await getFileTemp ( data.filePath, data.content, data.commit );
 
-  Utils.editor.open ( data.content, data.editor.document.languageId, column );
+  openInEditor ( filePath );
 
-}
+};
 
-function openFileAtCommitToSide () {
+const openFileAtCommitToSide = async (): Promise<void> => {
 
-  return openFileAtCommit ( true );
-
-}
-
-async function diffFileAtCommit () {
-
-  const data = await _getFileData () as any;
+  const data = await getFileData ();
 
   if ( !data ) return;
 
-  const tempOptions = Utils.temp.getOptions ( data.filepath ),
-        prevContent = data.prevCommit ? await Utils.repo.getContentByCommit ( data.git, data.prevCommit, data.relfilepath ) : '',
-        prevPath = await Utils.temp.makeFile ( tempOptions, prevContent ),
-        targetPath = await Utils.temp.makeFile ( tempOptions, data.content );
+  const filePath = await getFileTemp ( data.filePath, data.content, data.commit );
+  const viewColumn = vscode.ViewColumn.Beside;
 
-  diff ( prevPath, targetPath, data.commit );
+  openInEditor ( filePath, { viewColumn } );
 
-}
+};
 
-async function diffFileAtCommitAgainstCurrent () {
+const diffFileAtCommit = async (): Promise<void> => {
 
-  const data = await _getFileData () as any;
+  const data = await getFileData ();
 
   if ( !data ) return;
 
-  const tempOptions = Utils.temp.getOptions ( data.filepath ),
-        tempPath = await Utils.temp.makeFile ( tempOptions, data.content );
+  const prevContent = data.prevCommit ? await Git.getContentAtCommit ( data.gitPath, data.filePath, data.prevCommit.hash ) : Buffer.alloc ( 0 );
 
-  diff ( data.filepath, tempPath, data.commit );
+  if ( !prevContent ) return alert.error ( `Failed to read file content at commit ${data.prevCommit?.hash}` );
 
-}
+  const prevFilePath = await getFileTemp ( data.filePath, prevContent, data.prevCommit );
+  const nextFilePath = await getFileTemp ( data.filePath, data.content, data.commit );
+  const title = `${path.basename ( data.filePath )} - ${truncate ( data.commit.message, 60 )}`;
+
+  openInDiffEditor ( prevFilePath, nextFilePath, title );
+
+};
+
+const diffFileAtCommitAgainstCurrent = async (): Promise<void> => {
+
+  const data = await getFileData ();
+
+  if ( !data ) return;
+
+  const prevFilePath = await getFileTemp ( data.filePath, data.content, data.commit );
+  const nextContent = await Git.getContentAtHead ( data.gitPath, data.filePath );
+  const nextFilePath = await getFileTemp ( data.filePath, nextContent );
+  const title = `${path.basename ( data.filePath )} - ${truncate ( data.commit.message, 60 )}`;
+
+  openInDiffEditor ( prevFilePath, nextFilePath, title );
+
+};
 
 /* EXPORT */
 
-export {diff, openFileAtCommit, openFileAtCommitToSide, diffFileAtCommit, diffFileAtCommitAgainstCurrent};
+export {openFileAtCommit, openFileAtCommitToSide, diffFileAtCommit, diffFileAtCommitAgainstCurrent};
