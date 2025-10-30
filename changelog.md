@@ -2,7 +2,7 @@
 - New command: "Git: Restore File at Commit"
 
 ### Version 3.0.0
-- Rewitten: more modern code, no third-party dependencies, 99% smaller bundle
+- Rewritten: more modern code, no third-party dependencies, 99% smaller bundle
 - Deleted setting: "gitHistory.details.date.format", for simplicity
 
 ### Version 2.0.5
